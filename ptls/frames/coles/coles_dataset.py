@@ -1,6 +1,6 @@
 from functools import reduce
 from operator import iadd
-
+import numpy as np
 import torch
 
 from ptls.data_load.feature_dict import FeatureDict
@@ -46,15 +46,22 @@ class ColesDataset(FeatureDict, torch.utils.data.Dataset):
 
     def get_splits(self, feature_arrays):
         local_date = feature_arrays[self.col_time]
-        indexes = self.splitter.split(local_date)
-        return [{k: v[ix] for k, v in feature_arrays.items() if self.is_seq_feature(k, v)} for ix in indexes]
+        indexes, metric_similarity = self.splitter.split(local_date)
+        return [[{k: v[ix] for k, v in feature_arrays.items() if self.is_seq_feature(k, v)} for ix in indexes], metric_similarity]
 
     @staticmethod
     def collate_fn(batch):
-        class_labels = [i for i, class_samples in enumerate(batch) for _ in class_samples]
-        batch = reduce(iadd, batch)
-        padded_batch = collate_feature_dict(batch)
-        return padded_batch, torch.LongTensor(class_labels)
+        if isinstance(batch[0], list):
+            batch, metric_similarity = zip(*batch)
+            class_labels = [i for i, class_samples in enumerate(batch) for _ in class_samples]
+            batch = reduce(iadd, batch)
+            padded_batch = collate_feature_dict(batch)
+            return padded_batch, torch.LongTensor(class_labels), np.mean(metric_similarity)
+        else:
+            class_labels = [i for i, class_samples in enumerate(batch) for _ in class_samples]
+            batch = reduce(iadd, batch)
+            padded_batch = collate_feature_dict(batch)
+            return padded_batch, torch.LongTensor(class_labels)
 
 
 class ColesIterableDataset(ColesDataset, torch.utils.data.IterableDataset):

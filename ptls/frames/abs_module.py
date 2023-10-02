@@ -56,6 +56,8 @@ class ABSModule(pl.LightningModule):
         return self._seq_encoder(x)
 
     def training_step(self, batch, _):
+        if len(batch) > 2:
+            self.log('similarity', batch[2])
         y_h, y = self.shared_step(*batch)
         loss = self._loss(y_h, y)
         self.log('loss', loss)

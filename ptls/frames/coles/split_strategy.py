@@ -95,7 +95,7 @@ class SampleSlices(AbsSplit):
         self.cnt_max = cnt_max
         self.short_seq_crop_rate = short_seq_crop_rate
         self.is_sorted = is_sorted
-
+        
     def split(self, dates):
         date_len = dates.shape[0]
         date_range = np.arange(date_len)
@@ -113,11 +113,21 @@ class SampleSlices(AbsSplit):
         lengths = np.random.randint(cnt_min, cnt_max+1, self.split_count)
         available_start_pos = (date_len - lengths).clip(0, None)
         start_pos = (np.random.rand(self.split_count) * (available_start_pos + 1 - 1e-9)).astype(int)
+        similarity = self.find_similarity(start_pos, lengths)
         if not self.is_sorted:
-            return [date_range[s:s + l] for s, l in zip(start_pos, lengths)]
+            return [[date_range[s:s + l] for s, l in zip(start_pos, lengths)], similarity]
 
         ix_sort = np.argsort(start_pos)
-        return [date_range[s:s + l] for s, l in zip(start_pos[ix_sort], lengths[ix_sort])]
+        return [[date_range[s:s + l] for s, l in zip(start_pos[ix_sort], lengths[ix_sort])], similarity]
+    
+    @staticmethod
+    def find_similarity(start_pos, lengths):
+        similarity = 0
+        for i in range(len(start_pos)):
+            for j in range(i+1, len(start_pos)):
+                similarity += max(min(start_pos[i] + lengths[i], start_pos[j] + lengths[j]) - max(start_pos[i],  start_pos[j]), 0)
+        similarity /= (len(start_pos) - 1) * len(start_pos)/2
+        return similarity
 
 
 class SampleUniform(AbsSplit):
