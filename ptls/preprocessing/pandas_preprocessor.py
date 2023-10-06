@@ -1,5 +1,5 @@
 import logging
-from typing import List, Union
+from typing import List, Union, Dict
 
 import numpy as np
 import pandas as pd
@@ -11,6 +11,7 @@ from .pandas.col_identity_transformer import ColIdentityEncoder
 from .pandas.event_time import DatetimeToTimestamp
 from .pandas.frequency_encoder import FrequencyEncoder
 from .pandas.user_group_transformer import UserGroupTransformer
+from .pandas.pretrained_encoder import PretrainedEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,7 @@ class PandasDataPreprocessor(DataPreprocessor):
                  event_time_transformation: str = 'dt_to_timestamp',
                  cols_category: List[Union[str, ColCategoryTransformer]] = None,
                  category_transformation: str = 'frequency',
+                 cols_pretrained: Dict[str, Dict] = None,
                  cols_numerical: List[str] = None,
                  cols_identity: List[str] = None,
                  cols_first_item: List[str] = None,
@@ -81,6 +83,8 @@ class PandasDataPreprocessor(DataPreprocessor):
             cols_identity = []
         if cols_first_item is None:
             cols_first_item = []
+        if cols_pretrained is None:
+            cols_pretrained = {}
 
 
         if type(col_event_time) is not str:
@@ -110,7 +114,9 @@ class PandasDataPreprocessor(DataPreprocessor):
                 raise AttributeError(f'incorrect category parameters combination: '
                                      f'`cols_category[i]` = "{col}" '
                                      f'`category_transformation` = "{category_transformation}"')
-
+        cts_pretrained = []
+        for col_name, pretrained_dict in cols_pretrained.items():
+            cts_pretrained.append(PretrainedEncoder(col_name_original=col_name, pretrained_dict = pretrained_dict))
         cts_numerical = [ColIdentityEncoder(col_name_original=col) for col in cols_numerical]
         t_user_group = UserGroupTransformer(
             col_name_original=col_id, 
@@ -121,6 +127,7 @@ class PandasDataPreprocessor(DataPreprocessor):
         super().__init__(
             ct_event_time=ct_event_time,
             cts_category=cts_category,
+            cts_pretrained=cts_pretrained,
             cts_numerical=cts_numerical,
             cols_identity=cols_identity,
             t_user_group=t_user_group,

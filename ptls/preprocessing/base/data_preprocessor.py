@@ -12,6 +12,7 @@ class DataPreprocessor(BaseEstimator, TransformerMixin):
     def __init__(self,
                  ct_event_time: ColTransformer,
                  cts_category: List[ColCategoryTransformer],
+                 cts_pretrained: List[ColCategoryTransformer],
                  cts_numerical: List[ColTransformer],
                  cols_identity: List[str],
                  t_user_group: ColTransformer,
@@ -19,12 +20,14 @@ class DataPreprocessor(BaseEstimator, TransformerMixin):
         self.ct_event_time = ct_event_time
         self.cts_category = cts_category
         self.cts_numerical = cts_numerical
+        self.cts_pretrained = cts_pretrained
         self.cols_identity = cols_identity
         self.t_user_group = t_user_group
 
         self._all_col_transformers = [
             [self.ct_event_time],
             self.cts_category,
+            self.cts_pretrained,
             self.cts_numerical,
             [self.t_user_group],
         ]
