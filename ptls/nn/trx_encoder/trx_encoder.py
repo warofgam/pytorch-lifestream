@@ -110,19 +110,23 @@ class TrxEncoder(TrxEncoderBase):
 
         noisy_embeddings = {}
         for emb_name, emb_props in embeddings.items():
-            if emb_props.get('disabled', False):
-                continue
-            if emb_props['in'] == 0 or emb_props['out'] == 0:
-                continue
-            noisy_embeddings[emb_name] = NoisyEmbedding(
-                num_embeddings=emb_props['in'],
-                embedding_dim=emb_props['out'],
-                padding_idx=0,
-                max_norm=1 if norm_embeddings else None,
-                noise_scale=embeddings_noise,
-                dropout=emb_dropout,
-                spatial_dropout=spatial_dropout,
-            )
+            if type(emb_props) is dict:
+                if emb_props.get('disabled', False):
+                    continue
+                if emb_props['in'] == 0 or emb_props['out'] == 0:
+                    continue
+                noisy_embeddings[emb_name] = NoisyEmbedding(
+                    num_embeddings=emb_props['in'],
+                    embedding_dim=emb_props['out'],
+                    padding_idx=0,
+                    max_norm=1 if norm_embeddings else None,
+                    noise_scale=embeddings_noise,
+                    dropout=emb_dropout,
+                    spatial_dropout=spatial_dropout,
+                )
+            else:
+                noisy_embeddings[emb_name] = emb_props
+                
 
         super().__init__(
             embeddings=noisy_embeddings,
