@@ -110,7 +110,7 @@ class TrxEncoder(TrxEncoderBase):
 
         noisy_embeddings = {}
         for emb_name, emb_props in embeddings.items():
-            if type(emb_props) is dict:
+            if type(emb_props) is not torch.nn.modules.sparse.Embedding:
                 if emb_props.get('disabled', False):
                     continue
                 if emb_props['in'] == 0 or emb_props['out'] == 0:

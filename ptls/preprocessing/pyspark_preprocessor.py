@@ -17,6 +17,7 @@ from .pyspark.col_identity_transformer import ColIdentityEncoder
 from .pyspark.event_time import DatetimeToTimestamp
 from .pyspark.frequency_encoder import FrequencyEncoder
 from .pyspark.user_group_transformer import UserGroupTransformer
+from .pyspark.pretrained_encoder import PretrainedEncoder
 
 
 logger = logging.getLogger(__name__)
@@ -62,6 +63,7 @@ class PysparkDataPreprocessor(DataPreprocessor):
                  event_time_transformation: str = 'dt_to_timestamp',
                  cols_category: List[Union[str, ColCategoryTransformer]] = None,
                  category_transformation: str = 'frequency',
+                 cols_pretrained: Dict[str, Dict] = None,
                  cols_numerical: List[str] = None,
                  cols_identity: List[str] = None,
                  cols_last_item: List[str] = None,
@@ -109,7 +111,9 @@ class PysparkDataPreprocessor(DataPreprocessor):
                 raise AttributeError(f'incorrect category parameters combination: '
                                      f'`cols_category[i]` = "{col}" '
                                      f'`category_transformation` = "{category_transformation}"')
-
+        cts_pretrained = []
+        for col_name, pretrained_dict in cols_pretrained.items():
+            cts_pretrained.append(PretrainedEncoder(col_name_original=col_name, pretrained_dict = pretrained_dict))
         cts_numerical = [ColIdentityEncoder(col_name_original=col) for col in cols_numerical]
         t_user_group = UserGroupTransformer(
             col_name_original=col_id, cols_last_item=cols_last_item, max_trx_count=max_trx_count)
@@ -117,6 +121,7 @@ class PysparkDataPreprocessor(DataPreprocessor):
         super().__init__(
             ct_event_time=ct_event_time,
             cts_category=cts_category,
+            cts_pretrained=cts_pretrained,
             cts_numerical=cts_numerical,
             cols_identity=cols_identity,
             t_user_group=t_user_group,
